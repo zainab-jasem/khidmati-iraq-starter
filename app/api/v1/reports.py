@@ -2,10 +2,7 @@
 app/api/v1/reports.py
 Citizen-facing report endpoints.
 """
-
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-
+from fastapi import APIRouter, Depends, HTTPException
 from app.core.dependencies import get_current_active_user, require_citizen
 from app.database import get_db
 from app.models.comment import ReportComment
@@ -23,8 +20,6 @@ from app.schemas.report import (
 from app.services import report_service
 
 router = APIRouter(prefix="/reports", tags=["Reports – Citizen"])
-
-
 @router.post("", response_model=ReportResponse, status_code=201)
 def create_report(
     data: ReportCreate,
@@ -47,20 +42,30 @@ def my_reports(
         .order_by(Report.created_at.desc())
         .all()
     )
-
-
 @router.get("/{report_id}", response_model=ReportDetailResponse)
 def get_report(
     report_id: int,
     db: Session = Depends(get_db),
     citizen: User = Depends(require_citizen),
 ):
-    """Get a single report – citizens can only see their own."""
-    return report_service.get_citizen_report(db, citizen, report_id)
-
-
-@router.patch("/{report_id}", response_model=ReportResponse)
-def update_report(
+    """Get a single report — citizens can only see their own."""
+    report = db.query(Report).filter(Report.id == report_id).first()
+    
+    # 1. التأكد من وجود البلاغ
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+        
+    # 2. التأكد من أن البلاغ يخص هذا المواطن حصراً (FR-01)
+    if report.citizen_id != citizen.id:
+        raise HTTPException(
+            status_code=403, 
+            detail="You do not have permission to access this report"
+        )
+        
+    return report
+ 
+    @router.patch("/{report_id}", response_model=ReportResponse)
+    def update_report(
     report_id: int,
     data: ReportUpdate,
     db: Session = Depends(get_db),
