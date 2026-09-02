@@ -328,4 +328,16 @@ def admin_update_priority(
     db.commit()
     db.refresh(report)
     return report
-    
+def assign_report(db: Session, report_id: int, employee_id: int, current_user: User) -> Report:
+    report = db.get(Report, report_id)
+    if not report:
+        raise NotFoundError("Report")
+
+    target_employee = db.get(User, employee_id)
+    if not target_employee:
+        raise NotFoundError("Employee")
+
+    report.assigned_employee_id = employee_id
+    db.commit()
+    db.refresh(report)
+    return report   

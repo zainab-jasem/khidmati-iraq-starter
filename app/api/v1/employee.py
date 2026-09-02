@@ -4,12 +4,13 @@ Employee-facing endpoints for managing reports within their governorate.
 """
 
 from fastapi import APIRouter, Depends
+from typing import Optional
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import require_employee
 from app.database import get_db
 from app.models.comment import ReportComment
-from app.models.report import Report
+from app.models.report import Report,ReportStatus
 from app.models.user import User
 from app.schemas.comment import CommentCreate, CommentResponse
 from app.schemas.report import (
@@ -29,7 +30,7 @@ def list_governorate_reports(
     category_id: Optional[int] = None,
     db: Session = Depends(get_db),
     employee: User = Depends(require_employee),
-):
+        ):
     """FR-06: List and filter reports in the employee's governorate."""
     query = db.query(Report).filter(Report.governorate_id == employee.governorate_id)
 
@@ -99,3 +100,14 @@ def resolve_report(
 ):
     """Resolve a report with a mandatory resolution summary."""
     return report_service.employee_resolve_report(db, employee, report_id, data)
+@router.post("/reports/{report_id}/assign", response_model=ReportResponse)
+def assign_report(
+    report_id: int,
+    employee_id: int,
+    db: Session = Depends(get_db),
+    employee: User = Depends(require_employee),
+):
+    """
+    FR-07: Assign report to an employee.
+    """
+    return report_service.assign_report(db, report_id, employee_id, employee)   
