@@ -95,7 +95,17 @@ def toggle_user_status(
 # ---------------------------------------------------------------------------
 # Report management
 # ---------------------------------------------------------------------------
-
+@router.patch("/reports/{report_id}/priority", response_model=ReportResponse)
+def update_report_priority(
+    report_id: int,
+    data: PriorityUpdateRequest,
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    """
+    FR-09: Admin updates report priority level.
+    """
+    return report_service.admin_update_priority(db, report_id, data)
 @router.get("/reports", response_model=PaginatedResponse)
 def list_reports(
     db: Session = Depends(get_db),
