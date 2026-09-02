@@ -128,7 +128,16 @@ def create_report(db: Session, citizen: User, data: ReportCreate) -> Report:
     db.add(report)
     db.flush()  # Get report.id before recording history.
 
-    # TODO (TASK-05): Record the initial status entry in history.
+     # FR-05: تسجيل القيمة الابتدائية للبلاغ بجدول السجل
+    status_history = ReportStatusHistory(
+        report_id=report.id,
+        old_status=None,
+        new_status=ReportStatus.submitted,
+        changed_by_id=citizen.id,
+        note="تم تقديم البلاغ بنجاح"
+    )
+    db.add(status_history)
+    
     db.commit()
     db.refresh(report)
     return report
@@ -319,3 +328,4 @@ def admin_update_priority(
     db.commit()
     db.refresh(report)
     return report
+    
