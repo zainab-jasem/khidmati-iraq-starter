@@ -357,3 +357,17 @@ def add_comment(db: Session, report_id: int, data: CommentCreate, user: User) ->
     db.commit()
     db.refresh(comment)
     return comment
+def get_report_history(db: Session, report_id: int) -> list[ReportHistory]:
+    """
+    FR-10: Retrieve full audit trail / history logs for a specific report.
+ """
+    report = db.get(Report, report_id)
+    if not report:
+        raise NotFoundError("Report")
+
+    return (
+        db.query(ReportHistory)
+        .filter(ReportHistory.report_id == report_id)
+        .order_by(ReportHistory.created_at.asc())
+        .all()
+    )

@@ -122,3 +122,13 @@ def add_report_comment(
     FR-08: إضافة تعليق/ملاحظة على البلاغ من قبل الموظف.
     """
     return report_service.add_comment(db, report_id, data, employee)
+@router.get("/reports/{report_id}/history", response_model=list[ReportHistoryResponse])
+def get_employee_report_history(
+    report_id: int,
+    db: Session = Depends(get_db),
+    employee: User = Depends(require_employee),
+):
+    """
+    FR-10: Employee endpoint to view report audit trail.
+    """
+    return report_service.get_report_history(db, report_id)

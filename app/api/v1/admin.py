@@ -168,3 +168,13 @@ def dashboard(
         "reports_by_priority": {},
         "reports_by_category": {},
     }
+@router.get("/reports/{report_id}/history", response_model=list[ReportHistoryResponse])
+def get_admin_report_history(
+    report_id: int,
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    """
+    FR-10: Admin endpoint to view report audit trail.
+    """
+    return report_service.get_report_history(db, report_id)
