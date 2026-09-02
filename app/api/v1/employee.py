@@ -25,16 +25,20 @@ router = APIRouter(prefix="/employee", tags=["Employee"])
 
 @router.get("/reports", response_model=list[ReportResponse])
 def list_governorate_reports(
+    status: Optional[ReportStatus] = None,
+    category_id: Optional[int] = None,
     db: Session = Depends(get_db),
     employee: User = Depends(require_employee),
 ):
-    """List all reports in the employee's governorate."""
-    return (
-        db.query(Report)
-        .filter(Report.governorate_id == employee.governorate_id)
-        .order_by(Report.created_at.desc())
-        .all()
-    )
+    """FR-06: List and filter reports in the employee's governorate."""
+    query = db.query(Report).filter(Report.governorate_id == employee.governorate_id)
+
+    if status:
+        query = query.filter(Report.status == status)
+    if category_id:
+        query = query.filter(Report.category_id == category_id)
+
+    return query.order_by(Report.created_at.desc()).all()
 
 
 @router.get("/reports/assigned", response_model=list[ReportResponse])
