@@ -23,7 +23,7 @@ class ReportCreate(BaseModel):
     governorate_id: int
     area_id: int
     title: str = Field(min_length=5, max_length=255)
-    description: str = Field(min_length=10)
+    description: str = Field(min_length=20)
     address_details: str | None = None
 
 
@@ -32,7 +32,7 @@ class ReportUpdate(BaseModel):
     category_id: int | None = None
     area_id: int | None = None
     title: str | None = Field(default=None, min_length=5, max_length=255)
-    description: str | None = Field(default=None, min_length=10)
+    description: str | None = Field(default=None, min_length=20)
     address_details: str | None = None
 
 
