@@ -92,8 +92,8 @@ def validate_location(
     area = db.get(Area, area_id)
     if not area or not area.is_active:
         raise BadRequestError("INVALID_AREA", "Area not found or inactive.")
-
-    # TODO (TASK-03): The area must belong to the selected governorate.
+    if area.governorate_id != governorate_id:
+        raise BadRequestError("INVALID_AREA_GOVERNORATE", "Area does not belong to the selected governorate.")
 
     category = db.get(ServiceCategory, category_id)
     if not category or not category.is_active:
