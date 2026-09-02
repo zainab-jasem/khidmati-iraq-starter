@@ -111,3 +111,14 @@ def assign_report(
     FR-07: Assign report to an employee.
     """
     return report_service.assign_report(db, report_id, employee_id, employee)   
+@router.post("/reports/{report_id}/comments", response_model=CommentResponse)
+def add_report_comment(
+    report_id: int,
+    data: CommentCreate,
+    db: Session = Depends(get_db),
+    employee: User = Depends(require_employee),
+):
+    """
+    FR-08: إضافة تعليق/ملاحظة على البلاغ من قبل الموظف.
+    """
+    return report_service.add_comment(db, report_id, data, employee)

@@ -341,3 +341,19 @@ def assign_report(db: Session, report_id: int, employee_id: int, current_user: U
     db.commit()
     db.refresh(report)
     return report   
+def add_comment(db: Session, report_id: int, data: CommentCreate, user: User) -> ReportComment:
+    """FR-08: إضافة وتخزين التعليق الخاص بالبلاغ."""
+    report = db.get(Report, report_id)
+    if not report:
+        raise NotFoundError("Report")
+
+    comment = ReportComment(
+        report_id=report_id,
+        author_id=user.id,
+        content=data.content,
+        is_internal=getattr(data, 'is_internal', True)
+    )
+    db.add(comment)
+    db.commit()
+    db.refresh(comment)
+    return comment
