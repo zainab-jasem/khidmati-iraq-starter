@@ -3,7 +3,7 @@ app/services/report_service.py
 Core business logic for report management.
 All status-transition rules live in this file.
 """
-
+from fastapi import HTTPException
 from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
@@ -36,14 +36,19 @@ from app.schemas.report import (
 
 # Allowed transitions for employees
 # TODO (TASK-05): Define valid transitions
-EMPLOYEE_TRANSITIONS: dict[ReportStatus, list[ReportStatus]] = {}
+EMPLOYEE_TRANSITIONS: dict[ReportStatus, list[ReportStatus]] = {
+    ReportStatus.SUBMITTED: [ReportStatus.IN_PROGRESS, ReportStatus.REJECTED],
+    ReportStatus.IN_PROGRESS: [ReportStatus.RESOLVED, ReportStatus.REJECTED],
+    ReportStatus.RESOLVED: [],
+    ReportStatus.REJECTED: [],
+}
 
 def validate_transition(from_status: ReportStatus, to_status: ReportStatus) -> None:
-    """
-    TODO (TASK-05): Raise InvalidStatusTransitionError if the transition is not allowed.
-    """
-    pass
-
+    allowed = EMPLOYEE_TRANSITIONS.get(from_status, [])
+    if to_status not in allowed:
+        raise InvalidStatusTransitionError(
+            f"Cannot transition from '{from_status.value}' to '{to_status.value}'"
+        )
 
 # ---------------------------------------------------------------------------
 # Helper: record a status change in history
@@ -146,11 +151,15 @@ def create_report(db: Session, citizen: User, data: ReportCreate) -> Report:
 def get_citizen_report(db: Session, citizen: User, report_id: int) -> Report:
     """
     Return a report.
-    TODO (TASK-02): Ensure citizens can only view their own reports!
+    Ensure citizens can only view their own reports!
     """
     report = db.get(Report, report_id)
     if report is None:
-        raise NotFoundError("Report")
+        raise HTTPException(status_code=404, detail="Report not found")
+
+    if report.citizen_id != citizen.id:
+        raise HTTPException(status_code=403, detail="Access denied to this report")
+
     return report
 
 
