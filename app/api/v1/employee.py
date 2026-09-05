@@ -18,6 +18,7 @@ from app.schemas.report import (
     ReportResponse,
     ResolveRequest,
     StatusUpdateRequest,
+    ReportHistoryResponse,
 )
 from app.services import report_service
 
@@ -100,28 +101,7 @@ def resolve_report(
 ):
     """Resolve a report with a mandatory resolution summary."""
     return report_service.employee_resolve_report(db, employee, report_id, data)
-@router.post("/reports/{report_id}/assign", response_model=ReportResponse)
-def assign_report(
-    report_id: int,
-    employee_id: int,
-    db: Session = Depends(get_db),
-    employee: User = Depends(require_employee),
-):
-    """
-    FR-07: Assign report to an employee.
-    """
-    return report_service.assign_report(db, report_id, employee_id, employee)   
-@router.post("/reports/{report_id}/comments", response_model=CommentResponse)
-def add_report_comment(
-    report_id: int,
-    data: CommentCreate,
-    db: Session = Depends(get_db),
-    employee: User = Depends(require_employee),
-):
-    """
-    FR-08: إضافة تعليق/ملاحظة على البلاغ من قبل الموظف.
-    """
-    return report_service.add_comment(db, report_id, data, employee)
+
 @router.get("/reports/{report_id}/history", response_model=list[ReportHistoryResponse])
 def get_employee_report_history(
     report_id: int,

@@ -37,12 +37,13 @@ from app.schemas.report import (
 # Allowed transitions for employees
 # TODO (TASK-05): Define valid transitions
 EMPLOYEE_TRANSITIONS: dict[ReportStatus, list[ReportStatus]] = {
-    ReportStatus.SUBMITTED: [ReportStatus.IN_PROGRESS, ReportStatus.REJECTED],
-    ReportStatus.IN_PROGRESS: [ReportStatus.RESOLVED, ReportStatus.REJECTED],
-    ReportStatus.RESOLVED: [],
-    ReportStatus.REJECTED: [],
+    ReportStatus.submitted: [ReportStatus.under_review, ReportStatus.rejected, ReportStatus.cancelled],
+    ReportStatus.under_review: [ReportStatus.assigned, ReportStatus.rejected],
+    ReportStatus.assigned: [ReportStatus.in_progress, ReportStatus.under_review],
+    ReportStatus.in_progress: [ReportStatus.resolved, ReportStatus.assigned],
+    ReportStatus.resolved: [],
+    ReportStatus.rejected: [],
 }
-
 def validate_transition(from_status: ReportStatus, to_status: ReportStatus) -> None:
     allowed = EMPLOYEE_TRANSITIONS.get(from_status, [])
     if to_status not in allowed:
@@ -136,7 +137,7 @@ def create_report(db: Session, citizen: User, data: ReportCreate) -> Report:
      # FR-05: تسجيل القيمة الابتدائية للبلاغ بجدول السجل
     status_history = ReportStatusHistory(
         report_id=report.id,
-        old_status=None,
+        previous_status=None,
         new_status=ReportStatus.submitted,
         changed_by_id=citizen.id,
         note="تم تقديم البلاغ بنجاح"
@@ -149,17 +150,11 @@ def create_report(db: Session, citizen: User, data: ReportCreate) -> Report:
 
 
 def get_citizen_report(db: Session, citizen: User, report_id: int) -> Report:
-    """
-    Return a report.
-    Ensure citizens can only view their own reports!
-    """
     report = db.get(Report, report_id)
     if report is None:
-        raise HTTPException(status_code=404, detail="Report not found")
-
+        raise NotFoundError("Report")
     if report.citizen_id != citizen.id:
-        raise HTTPException(status_code=403, detail="Access denied to this report")
-
+        raise PermissionDeniedError("You do not have permission to access this report.")
     return report
 
 
@@ -350,22 +345,7 @@ def assign_report(db: Session, report_id: int, employee_id: int, current_user: U
     db.commit()
     db.refresh(report)
     return report   
-def add_comment(db: Session, report_id: int, data: CommentCreate, user: User) -> ReportComment:
-    """FR-08: إضافة وتخزين التعليق الخاص بالبلاغ."""
-    report = db.get(Report, report_id)
-    if not report:
-        raise NotFoundError("Report")
 
-    comment = ReportComment(
-        report_id=report_id,
-        author_id=user.id,
-        content=data.content,
-        is_internal=getattr(data, 'is_internal', True)
-    )
-    db.add(comment)
-    db.commit()
-    db.refresh(comment)
-    return comment
 def get_report_history(db: Session, report_id: int) -> list[ReportHistory]:
     """
     FR-10: Retrieve full audit trail / history logs for a specific report.

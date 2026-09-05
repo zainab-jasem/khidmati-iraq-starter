@@ -144,3 +144,11 @@ class ReportFilterParams(BaseModel):
     search: str | None = None
     page: int = Field(default=1, ge=1)
     page_size: int = Field(default=20, ge=1, le=100)
+class ReportHistoryResponse(BaseModel):
+    id: int
+    report_id: int
+    old_status: str
+    new_status: str
+    changed_at: datetime
+
+    model_config = {"from_attributes": True}

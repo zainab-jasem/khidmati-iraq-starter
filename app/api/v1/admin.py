@@ -18,7 +18,7 @@ from app.schemas.report import (
     AssignRequest,
     PaginatedResponse,
     PriorityUpdateRequest,
-    ReportDetailResponse,
+    ReportHistoryResponse,
     ReportResponse,
 )
 from app.schemas.user import CreateEmployeeRequest, UserPublic
@@ -134,17 +134,6 @@ def assign_report(
 ):
     """Assign an employee to a report."""
     return report_service.admin_assign_report(db, admin, report_id, data)
-
-
-@router.patch("/reports/{report_id}/priority", response_model=ReportResponse)
-def update_priority(
-    report_id: int,
-    data: PriorityUpdateRequest,
-    db: Session = Depends(get_db),
-    _admin: User = Depends(require_admin),
-):
-    """Update the priority of a report."""
-    return report_service.admin_update_priority(db, report_id, data)
 
 
 # ---------------------------------------------------------------------------

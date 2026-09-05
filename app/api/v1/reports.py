@@ -3,6 +3,7 @@ app/api/v1/reports.py
 Citizen-facing report endpoints.
 """
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 from app.core.dependencies import get_current_active_user, require_citizen
 from app.database import get_db
 from app.models.comment import ReportComment
@@ -18,7 +19,6 @@ from app.schemas.report import (
     StatusHistoryResponse,
 )
 from app.services import report_service
-
 router = APIRouter(prefix="/reports", tags=["Reports – Citizen"])
 @router.post("", response_model=ReportResponse, status_code=201)
 def create_report(
@@ -63,9 +63,8 @@ def get_report(
         )
         
     return report
- 
-    @router.patch("/{report_id}", response_model=ReportResponse)
-    def update_report(
+@router.patch("/{report_id}", response_model=ReportResponse)
+def update_report(
     report_id: int,
     data: ReportUpdate,
     db: Session = Depends(get_db),
@@ -117,6 +116,7 @@ def get_report_comments(
         db.query(ReportComment)
         .filter(
             ReportComment.report_id == report_id,
+            ReportComment.is_internal == False,
         )
         .order_by(ReportComment.created_at.asc())
         .all()
